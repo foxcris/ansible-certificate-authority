@@ -1,0 +1,33 @@
+---
+#https://galaxy.ansible.com/robertdebock/ca
+
+- name: Setup own ca
+  hosts: localhost
+  connection: local
+  tasks:
+    - include_role:
+        name: certificate-authority
+      vars:
+        ca_openssl_path: ./ca/ssl
+        ca_passphrase: supersecret
+        ca_common_name: zabbix.volker-boehme.de
+        ca_country_name: DE
+        ca_email_address: volker@volker-boehme.de
+        ca_organization_name: boehme
+        ca_organizational_unit_name: boehme
+        ca_state_or_province_name: NRW
+        ca_locality_name: Cologne
+        ca_requests: ['home.volker-boehme.de', 'contabo.volker-boehme.de', 'contabo2.volker-boehme.de', 'homegear.volker-boehme.de']
+    - include_role:
+        name: certificate-authority
+      vars:
+        ca_openssl_path: ./ca/ssl
+        ca_passphrase: supersecret
+        ca_common_name: graylog.volker-boehme.de
+        ca_country_name: DE
+        ca_email_address: volker@volker-boehme.de
+        ca_organization_name: boehme
+        ca_organizational_unit_name: boehme
+        ca_state_or_province_name: NRW
+        ca_locality_name: Cologne
+        ca_requests: ['home.volker-boehme.de', 'contabo.volker-boehme.de', 'contabo2.volker-boehme.de', 'homegear.volker-boehme.de']
