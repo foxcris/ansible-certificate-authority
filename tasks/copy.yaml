@@ -1,0 +1,43 @@
+---
+- name: Fail if required settings are not defined
+  fail:
+    msg: >-
+      You need to define a required configuration setting (`{{ item }}`).
+  when: "vars[item] == '' or vars[item] == []"
+  with_items:
+    - "ca_requests_crt"
+    - "ca_requests_key" 
+
+- name: Create directories
+  file:
+    path: '{{ item }}'
+    state: directory
+    mode: '0755'
+  with_items:
+    - "{{ _ca_openssl_path[ansible_os_family] | default(_ca_openssl_path['default']) }}/{{ ca_certs_path }}/{{ ca_common_name }}"
+    - "{{ _ca_openssl_path[ansible_os_family] | default(_ca_openssl_path['default']) }}/{{ ca_private_path }}/{{ ca_common_name }}"
+
+- name: publish ca_requests certificate
+  copy:
+    src: "{{ ca_openssl_path }}/{{ ca_certs_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.crt"
+    dest: "{{ _ca_openssl_path[ansible_os_family] | default(_ca_openssl_path['default']) }}/{{ ca_certs_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.crt"
+    mode: "644"
+  loop: "{{ ca_requests_crt }}"
+
+- name: publish ca_requests key
+  copy:
+    src: "{{ ca_openssl_path }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.pem"
+    dest: "{{ _ca_openssl_path[ansible_os_family] | default(_ca_openssl_path['default']) }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.pem"
+    mode: "644"
+  loop: "{{ ca_requests_key }}"
+
+- name: publish ca certificate
+  copy:
+    src: "{{ ca_openssl_path }}/{{ ca_certificate_path }}"
+    dest: "{{ ca_local_ca_certificates}}/ca_{{ ca_common_name }}.crt"
+    mode: "644"
+
+- name: update-ca-certificates
+  shell: update-ca-certificates
+  args:
+    executable: /bin/bash

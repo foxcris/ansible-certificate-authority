@@ -1,152 +1,22 @@
+
+
+
 ---
-- name: ensure openssl_path exists
-  file:
-    path: "{{ item }}"
-    state: directory
-    mode: "0755"
-  loop:
-    - "{{ ca_openssl_path }}/{{ ca_private_path }}/{{ ca_common_name }}"
-    - "{{ ca_openssl_path }}/{{ ca_certs_path }}/{{ ca_common_name }}"
-    - "{{ ca_openssl_path }}/{{ ca_csr_path }}/{{ ca_common_name }}"
-  when:
-    - ca_mode == 'ca'
-
-- name: generate ca key
-#  openssl_privatekey:
-#    path: "{{ ca_openssl_path }}/{{ ca_privatekey_path }}"
-#    passphrase: "{{ ca_passphrase }}"
-#    cipher: auto
-  community.crypto.openssl_privatekey:
-    path: "{{ ca_openssl_path }}/{{ ca_privatekey_path }}"
-    passphrase: "{{ ca_passphrase }}"
-    cipher: auto
-  when:
-    - ca_mode == 'ca'
-
-- name: generate ca certificate signing request
-  community.crypto.openssl_csr:
-    path: "{{ ca_openssl_path }}/{{ ca_certiticate_request_path }}"
-    privatekey_path: "{{ ca_openssl_path }}/{{ ca_privatekey_path }}"
-    privatekey_passphrase: "{{ ca_passphrase }}"
-    common_name: "{{ ca_common_name }}"
-    country_name: "{{ ca_country_name | default(omit) }}"
-    email_address: "{{ ca_email_address | default(omit) }}"
-    organization_name: "{{ ca_organization_name | default(omit) }}"
-    organizational_unit_name: "{{ ca_organizational_unit_name | default(omit) }}"
-    state_or_province_name: "{{ ca_state_or_province_name | default(omit) }}"
-    locality_name : "{{ ca_locality_name  | default(omit) }}"
-  when:
-    - ca_mode == 'ca'
-
-- name: generate ca certificate
-#  openssl_certificate:
-#    path: "{{ ca_openssl_path }}/{{ ca_certificate_path }}"
-#    privatekey_path: "{{ ca_openssl_path }}/{{ ca_privatekey_path }}"
-#    privatekey_passphrase: "{{ ca_passphrase }}"
-#    csr_path: "{{ ca_openssl_path }}/{{ ca_common_name }}/{{ ca_csr_path }}"
-#    provider: selfsigned
-#    selfsigned_not_after: "{{ selfsigned_not_after }}"
-  community.crypto.x509_certificate:
-    path: "{{ ca_openssl_path }}/{{ ca_certificate_path }}"
-    privatekey_path: "{{ ca_openssl_path }}/{{ ca_privatekey_path }}"
-    csr_path: "{{ ca_openssl_path }}/{{ ca_certiticate_request_path }}"
-    privatekey_passphrase: "{{ ca_passphrase }}"
-    selfsigned_not_after: "{{ selfsigned_not_after }}"
-    provider: selfsigned
-  when:
-    - ca_mode == 'ca'
-
-- name: generate requested key
-  community.crypto.openssl_privatekey:
-    path: "{{ ca_openssl_path }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.pem"
-    passphrase: "{{ item.passphrase | default(omit) }}"
-    cipher: "{{ item.cipher | default(omit) }}"
-  loop: "{{ ca_requests }}"
-  when:
-    - ca_requests is defined
-    - ca_mode == 'ca'
-
-- name: generate requested certificate signing request
-  community.crypto.openssl_csr:
-    path: "{{ ca_openssl_path }}/{{ ca_csr_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.csr"
-    privatekey_path: "{{ ca_openssl_path }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.pem"
-    privatekey_passphrase: "{{ item.passphrase | default(omit) }}"
-    common_name: "{{ item.name | default(item) }}"
-    country_name: "{{ item.country_name | default(omit) }}"
-    email_address: "{{ item.email_address | default(omit) }}"
-    organization_name: "{{ item.organization_name | default(omit) }}"
-    organizational_unit_name: "{{ item.organizational_unit_name | default(omit) }}"
-    locality_name : "{{ ca_locality_name  | default(omit) }}"
-    extended_key_usage:
-      - clientAuth
-      - serverAuth
-  loop: "{{ ca_requests }}"
-  when:
-    - ca_requests is defined
-    - ca_mode == 'ca'
-
-- name: generate certificate
-  community.crypto.x509_certificate:
-    privatekey_path: "{{ ca_openssl_path }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.pem"
-    path: "{{ ca_openssl_path }}/{{ ca_certs_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.crt"
-    csr_path: "{{ ca_openssl_path }}/{{ ca_csr_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.csr"
-    privatekey_passphrase: "{{ item.passphrase | default(omit) }}"
-    provider: ownca
-    ownca_path: '{{ ca_openssl_path }}/{{ ca_certificate_path }}'
-    ownca_privatekey_path: '{{ ca_openssl_path }}/{{ ca_privatekey_path }}'
-    ownca_privatekey_passphrase: "{{ ca_passphrase }}"
-    ownca_not_after: "{{ ownca_not_after }}"
-    selfsigned_not_after: "{{ selfsigned_not_after }}"
-  loop: "{{ ca_requests }}"
-  when:
-    - ca_requests is defined
-    - ca_mode == 'ca'
-
-- name: Create directories
-  file:
-    path: '{{ item }}'
-    state: directory
-    mode: '0755'
+- name: Fail if required settings are not defined
+  fail:
+    msg: >-
+      You need to define a required configuration setting (`{{ item }}`).
+  when: "vars[item] == '' or vars[item] == []"
   with_items:
-    - "{{ _ca_openssl_path[ansible_os_family] | default(_ca_openssl_path['default']) }}/{{ ca_certs_path }}/{{ ca_common_name }}"
-    - "{{ _ca_openssl_path[ansible_os_family] | default(_ca_openssl_path['default']) }}/{{ ca_private_path }}/{{ ca_common_name }}"
-  when:
-    - ca_requests is defined
-    - ca_mode == 'copy'
+    - "ca_mode"
+    - "ca_common_name"
 
-- name: publish ca_requests certificate
-  copy:
-    src: "{{ ca_openssl_path }}/{{ ca_certs_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.crt"
-    dest: "{{ _ca_openssl_path[ansible_os_family] | default(_ca_openssl_path['default']) }}/{{ ca_certs_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.crt"
-    mode: "644"
-  loop: "{{ ca_requests }}"
+- name: Running mode ca
+  include_tasks: ca.yaml
   when:
-    - ca_requests is defined
-    - ca_mode == 'copy'
+    - ca_mode == 'ca'
 
-- name: publish ca_requests key
-  copy:
-    src: "{{ ca_openssl_path }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.pem"
-    dest: "{{ _ca_openssl_path[ansible_os_family] | default(_ca_openssl_path['default']) }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.pem"
-    mode: "644"
-  loop: "{{ ca_requests }}"
-  when:
-    - ca_requests is defined
-    - ca_mode == 'copy'
-
-- name: publish ca certificate
-  copy:
-    src: "{{ ca_openssl_path }}/{{ ca_certificate_path }}"
-    dest: "{{ ca_local_ca_certificates}}/ca_{{ ca_common_name }}.crt"
-    mode: "644"
+- name: Running mode copy
+  include_tasks: copy.yaml
   when:
     - ca_mode == 'copy'
-
-- name: update-ca-certificates
-  shell: update-ca-certificates
-  args:
-    executable: /bin/bash
-  when:
-    - ca_mode == 'copy'
-  
-    

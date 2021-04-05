@@ -2,7 +2,7 @@
 # defaults file for ca
 
 # A passphrase for the CA key.
-ca_passphrase: secret
+ca_passphrase: ''
 
 # The common name for the CA.
 ca_common_name: ca_common_name
@@ -35,6 +35,8 @@ ca_privatekey_path: "{{ ca_private_path }}/{{ ca_common_name }}/ca.pem"
 ca_certiticate_request_path: "{{ ca_csr_path }}/{{ ca_common_name }}/ca.csr"
 ca_certificate_path: "{{ ca_certs_path }}/{{ ca_common_name }}/ca.crt"
 ca_requests: []
+ca_requests_crt: []
+ca_requests_key: []
 
 ca_mode: ca #create ca + request certs
 #ca_mode: copy #copy created request cert to server

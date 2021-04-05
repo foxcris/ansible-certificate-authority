@@ -1,0 +1,14 @@
+---
+  - name: Playbook to setup server2
+    hosts: 
+      - server2.example.com
+    strategy: debug
+    become: true
+    tasks:
+      - include_role:
+          name: certificate-authority
+        vars:
+          ca_mode: copy
+          ca_openssl_path: ./ca/ssl
+          ca_common_name: graylog.volker-boehme.de
+          ca_requests: ['server2.example.com']
