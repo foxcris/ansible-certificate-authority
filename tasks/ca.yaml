@@ -113,3 +113,16 @@
   loop: "{{ ca_requests }}"
   when:
     - ca_requests is defined
+
+- name: Generate PKCS#12 file
+  community.crypto.openssl_pkcs12:
+    action: export
+    path: "{{ ca_openssl_path }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.p12"
+    friendly_name: "{{ ca_common_name }}"
+    privatekey_path: "{{ ca_openssl_path }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.pem"
+    privatekey_passphrase: "{{ item.passphrase | default(omit) }}"
+    certificate_path: "{{ ca_openssl_path }}/{{ ca_certs_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.crt"
+    state: present
+  loop: "{{ ca_requests }}"
+  when:
+    - ca_requests is defined
