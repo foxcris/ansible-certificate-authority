@@ -41,6 +41,9 @@
     organizational_unit_name: "{{ ca_organizational_unit_name | default(omit) }}"
     state_or_province_name: "{{ ca_state_or_province_name | default(omit) }}"
     locality_name : "{{ ca_locality_name  | default(omit) }}"
+    basic_constraints:
+      - 'CA:TRUE'
+    basic_constraints_critical: yes
 
 - name: generate ca certificate
 #  openssl_certificate:
@@ -57,6 +60,16 @@
     privatekey_passphrase: "{{ ca_passphrase }}"
     selfsigned_not_after: "{{ selfsigned_not_after }}"
     provider: selfsigned
+
+- name: Generate PKCS#12 file
+  community.crypto.openssl_pkcs12:
+    action: export
+    path: "{{ ca_openssl_path }}/{{ ca_privatekey_path_p12 }}"
+    friendly_name: "{{ ca_common_name }}"
+    privatekey_path: "{{ ca_openssl_path }}/{{ ca_privatekey_path }}"
+    privatekey_passphrase: "{{ ca_passphrase }}"
+    certificate_path: "{{ ca_openssl_path }}/{{ ca_certificate_path }}"
+    state: present
 
 - name: generate requested key
   community.crypto.openssl_privatekey:

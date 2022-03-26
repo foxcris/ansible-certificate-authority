@@ -32,6 +32,7 @@ ca_private_path: private
 ca_certs_path: certs
 ca_csr_path: csr
 ca_privatekey_path: "{{ ca_private_path }}/{{ ca_common_name }}/ca.pem"
+ca_privatekey_path_p12: "{{ ca_private_path }}/{{ ca_common_name }}/ca.p12"
 ca_certiticate_request_path: "{{ ca_csr_path }}/{{ ca_common_name }}/ca.csr"
 ca_certificate_path: "{{ ca_certs_path }}/{{ ca_common_name }}/ca.crt"
 ca_requests: []
