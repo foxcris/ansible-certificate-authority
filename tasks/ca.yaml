@@ -44,6 +44,16 @@
     basic_constraints:
       - 'CA:TRUE'
     basic_constraints_critical: yes
+    extended_key_usage_critical: yes
+    extended_key_usage:
+      - serverAuth
+    key_usage_critical: yes
+    key_usage:
+      - cRLSign
+      - digitalSignature
+      - keyCertSign
+      - keyEncipherment
+      - dataEncipherment
 
 - name: generate ca certificate
 #  openssl_certificate:
@@ -91,9 +101,16 @@
     organization_name: "{{ item.organization_name | default(omit) }}"
     organizational_unit_name: "{{ item.organizational_unit_name | default(omit) }}"
     locality_name : "{{ ca_locality_name  | default(omit) }}"
+    extended_key_usage_critical: yes
     extended_key_usage:
       - clientAuth
       - serverAuth
+    key_usage_critical: yes
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+      - keyAgreement
+      - nonRepudiation
   loop: "{{ ca_requests }}"
   when:
     - ca_requests is defined
@@ -110,6 +127,15 @@
     ownca_privatekey_passphrase: "{{ ca_passphrase }}"
     ownca_not_after: "{{ ownca_not_after }}"
     selfsigned_not_after: "{{ selfsigned_not_after }}"
+  loop: "{{ ca_requests }}"
+  when:
+    - ca_requests is defined
+
+- name: Build certificate chain
+  lineinfile: 
+    path: "{{ ca_openssl_path }}/{{ ca_certs_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.crt"
+    line: "{{lookup('file', '{{ ca_openssl_path }}/{{ ca_certificate_path }}')}}"
+    state: present
   loop: "{{ ca_requests }}"
   when:
     - ca_requests is defined
