@@ -28,6 +28,8 @@
     path: "{{ ca_openssl_path }}/{{ ca_privatekey_path }}"
     passphrase: "{{ ca_passphrase }}"
     cipher: auto
+    format: "pkcs8"
+    format_mismatch: "convert"
 
 - name: generate ca certificate signing request
   community.crypto.openssl_csr:
@@ -86,6 +88,8 @@
     path: "{{ ca_openssl_path }}/{{ ca_private_path }}/{{ ca_common_name }}/{{ item.name | default(item) }}.pem"
     passphrase: "{{ item.passphrase | default(omit) }}"
     cipher: "{{ item.cipher | default(omit) }}"
+    format: "pkcs8"
+    format_mismatch: "convert"
   loop: "{{ ca_requests }}"
   when:
     - ca_requests is defined
@@ -127,6 +131,7 @@
     ownca_privatekey_passphrase: "{{ ca_passphrase }}"
     ownca_not_after: "{{ ownca_not_after }}"
     selfsigned_not_after: "{{ selfsigned_not_after }}"
+    force: "true"
   loop: "{{ ca_requests }}"
   when:
     - ca_requests is defined
